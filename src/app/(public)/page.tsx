@@ -4,17 +4,42 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation"; // Imported here for the client component below
 import { ArrowRight, Bot, BarChart3, FileText, Star } from "lucide-react";
-
+import { useUser, useClerk } from "@clerk/nextjs";
 // --- Client Component Definition ---
 // By placing "use client" here, only this component and its children are client-rendered.
 // This allows us to use hooks like useRouter() while the rest of the page remains a Server Component.
 
 
-function HeroActions() {
+export function HeroActions() {
     const router = useRouter();
+    const { isSignedIn, user } = useUser();
+    const { openSignIn } = useClerk();
 
-    const goEmployer = () => router.push("/dashboard");
-    const goApplicant = () => router.push("/interview/join");
+    const goEmployer = () => {
+        if (!isSignedIn) {
+            return openSignIn({
+                afterSignInUrl: "/dashboard",
+                afterSignUpUrl: "/onboarding?intent=employer",
+            });
+        }
+        const role = user?.publicMetadata?.role;
+        if (!role) return router.push("/onboarding?intent=employer");
+        if (role !== "employer") return router.push("/onboarding");
+        router.push("/dashboard");
+    };
+
+    const goApplicant = () => {
+        if (!isSignedIn) {
+            return openSignIn({
+                afterSignInUrl: "/interview/join",
+                afterSignUpUrl: "/onboarding?intent=applicant",
+            });
+        }
+        const role = user?.publicMetadata?.role;
+        if (!role) return router.push("/onboarding?intent=applicant");
+        if (role !== "applicant") return router.push("/onboarding");
+        router.push("/interview/join");
+    };
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
@@ -206,21 +231,37 @@ const TestimonialSection = () => (
     </Section>
 );
 
-const FinalCtaSection = () => (
-    <Section className="bg-slate-900 text-white rounded-2xl p-16 text-center animate-fade-in-up">
-        <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Hiring?</h2>
-        <p className="text-slate-300 max-w-xl mx-auto mb-8">
-            Stop sorting through resumes. Start having meaningful, data-backed conversations.
-        </p>
-        <Link
-            href="/interviews/new"
-            className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-200 transition-colors"
-        >
-            Create Your First Job Free
-            <ArrowRight className="h-5 w-5 ml-2" />
-        </Link>
-    </Section>
-);
+export function FinalCtaSection() {
+    const { isSignedIn } = useUser();
+    const { openSignIn } = useClerk();
+    const router = useRouter();
+
+    const goCreateJob = () => {
+        if (!isSignedIn) {
+            return openSignIn({
+                afterSignInUrl: "/jobs/create",
+                afterSignUpUrl: "/onboarding?intent=employer",
+            });
+        }
+        router.push("/jobs/create");
+    };
+
+    return (
+        <section className="bg-slate-900 text-white rounded-2xl p-16 text-center animate-fade-in-up">
+            <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Hiring?</h2>
+            <p className="text-slate-300 max-w-xl mx-auto mb-8">
+                Stop sorting through resumes. Start having meaningful, data-backed conversations.
+            </p>
+            <button
+                onClick={goCreateJob}
+                className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-200 transition-colors"
+            >
+                Create Your First Job Free
+                <ArrowRight className="h-5 w-5 ml-2" />
+            </button>
+        </section>
+    );
+}
 
 // --- Main Page Component ---
 export default function LandingPage() {
