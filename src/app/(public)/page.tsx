@@ -1,87 +1,30 @@
 // src/app/(public)/page.tsx
 "use client";
-import Link from "next/link";
+
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // Imported here for the client component below
-import { ArrowRight, Bot, BarChart3, FileText, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Bot, BarChart3, FileText, Star, Code, Briefcase, BarChart } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
-// --- Client Component Definition ---
-// By placing "use client" here, only this component and its children are client-rendered.
-// This allows us to use hooks like useRouter() while the rest of the page remains a Server Component.
-
-
-export function HeroActions() {
-    const router = useRouter();
-    const { isSignedIn, user } = useUser();
-    const { openSignIn } = useClerk();
-
-    const goEmployer = () => {
-        if (!isSignedIn) {
-            return openSignIn({
-                afterSignInUrl: "/dashboard",
-                afterSignUpUrl: "/onboarding?intent=employer",
-            });
-        }
-        const role = user?.publicMetadata?.role;
-        if (!role) return router.push("/onboarding?intent=employer");
-        if (role !== "employer") return router.push("/onboarding");
-        router.push("/dashboard");
-    };
-
-    const goApplicant = () => {
-        if (!isSignedIn) {
-            return openSignIn({
-                afterSignInUrl: "/interview/join",
-                afterSignUpUrl: "/onboarding?intent=applicant",
-            });
-        }
-        const role = user?.publicMetadata?.role;
-        if (!role) return router.push("/onboarding?intent=applicant");
-        if (role !== "applicant") return router.push("/onboarding");
-        router.push("/interview/join");
-    };
-
-    return (
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <button
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                onClick={goEmployer}
-            >
-                Go to Dashboard
-                <ArrowRight className="h-5 w-5 ml-2" />
-            </button>
-            <button
-                className="inline-flex items-center justify-center rounded-md border px-5 py-2.5 text-sm font-medium hover:bg-neutral-100 transition-colors"
-                onClick={goApplicant}
-            >
-                Join an Interview
-            </button>
-        </div>
-    );
-}
-
-// --- END OF CLIENT COMPONENT ---
-// The rest of this file is rendered on the server.
 
 // --- Data Abstraction ---
 const LANDING_PAGE_DATA = {
     features: [
         {
-            icon: <Bot className="h-8 w-8 text-blue-600" />,
+            icon: <Bot className="h-8 w-8 text-blue-500" />,
             title: "AI Interviewer",
             description: "Intelligent AI conducts interviews with natural conversation and relevant follow-ups.",
             imageSrc: "/robot1.png",
             imageAlt: "An illustration of a friendly robot, representing the AI interviewer."
         },
         {
-            icon: <BarChart3 className="h-8 w-8 text-blue-600" />,
+            icon: <BarChart3 className="h-8 w-8 text-blue-500" />,
             title: "Smart Scoring",
             description: "Weighted criteria and evidence-backed scores provide objective, data-driven insights.",
             imageSrc: "/scoring1.png",
             imageAlt: "An illustration of charts and graphs, representing smart scoring."
         },
         {
-            icon: <FileText className="h-8 w-8 text-blue-600" />,
+            icon: <FileText className="h-8 w-8 text-blue-500" />,
             title: "Detailed Reports",
             description: "Get comprehensive reports outlining candidate strengths, potential risks, and clear recommendations.",
             imageSrc: "/report1.png",
@@ -93,67 +36,66 @@ const LANDING_PAGE_DATA = {
         { number: "2", title: "Invite Candidates", description: "Share a unique link and let our AI handle screening 24/7." },
         { number: "3", title: "Review & Hire", description: "Analyze detailed reports and hire the best talent with confidence." },
     ],
+    logos: [
+        { name: "TechCorp", icon: <Briefcase className="h-8 w-8" /> },
+        { name: "Innovate Inc.", icon: <Code className="h-8 w-8" /> },
+        { name: "Quantum Solutions", icon: <BarChart className="h-8 w-8" /> },
+        { name: "Future Systems", icon: <Bot className="h-8 w-8" /> },
+        { name: "Data Driven Co.", icon: <BarChart3 className="h-8 w-8" /> },
+    ],
 };
 
 // --- Reusable & Section Components ---
 
-const Section = ({ children, className, ...props }: React.ComponentProps<"section">) => (
-    <section className={`py-24 ${className || ""}`} {...props}>
+const Section = ({ children, className = "", ...props }: React.ComponentProps<"section">) => (
+    <section className={`py-20 md:py-28 ${className}`} {...props}>
         {children}
     </section>
 );
 
-const SectionHeader = ({ title, description }: { title: string; description: string }) => (
-    <div className="text-center mb-12 animate-fade-in-up">
-        <h2 id={title.toLowerCase().replace(/\s+/g, '-')} className="text-4xl font-bold text-slate-900">
+const SectionHeader = ({ title, description }: { title: React.ReactNode; description: string }) => (
+    <div className="text-center mb-12 md:mb-16">
+        <h2 id={typeof title === 'string' ? title.toLowerCase().replace(/\s+/g, '-') : undefined} className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
             {title}
         </h2>
-        <p className="text-md text-slate-500 mt-2 max-w-2xl mx-auto">{description}</p>
+        <p className="text-lg text-slate-600 mt-4 max-w-2xl mx-auto">{description}</p>
     </div>
 );
 
-const FeatureCard = ({ icon, title, description, imageSrc, imageAlt, animationDelay = 0 }: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    imageSrc: string;
-    imageAlt: string;
-    animationDelay?: number;
-}) => (
+const FeatureCard = ({ icon, title, description, imageSrc, imageAlt, animationDelay = 0 }: typeof LANDING_PAGE_DATA.features[0] & { animationDelay?: number }) => (
     <div
-        className="text-center overflow-hidden relative group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in-up border rounded-xl bg-white"
+        className="relative p-[1px] overflow-hidden rounded-2xl group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in-up bg-slate-100/50"
         style={{ animationDelay: `${animationDelay}ms` }}
     >
-        <div className="relative h-48 bg-slate-100 flex items-center justify-center overflow-hidden group-hover:bg-slate-200/60 transition-colors duration-300">
-            <Image
-                src={imageSrc}
-                alt={imageAlt}
-                fill
-                className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-                sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-            />
-        </div>
-        <div className="p-6">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/10 mb-4 transition-transform duration-300 group-hover:scale-110">
-                {icon}
+        <div className="rounded-2xl h-full bg-white transition-all duration-300">
+            <div className="relative h-56 bg-slate-100 flex items-center justify-center overflow-hidden group-hover:bg-slate-200/50 transition-colors duration-300">
+                <Image
+                    src={imageSrc}
+                    alt={imageAlt}
+                    fill
+                    className="object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-105"
+                    sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+                />
             </div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="mt-2 text-slate-600">{description}</p>
+            <div className="p-6 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    {icon}
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
+                <p className="mt-2 text-slate-600">{description}</p>
+            </div>
         </div>
+        {/* Glow effect on hover */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
     </div>
 );
 
-const StepCard = ({ number, title, description, animationDelay = 0 }: {
-    number: string;
-    title: string;
-    description: string;
-    animationDelay?: number;
-}) => (
+const StepCard = ({ number, title, description, animationDelay = 0 }: typeof LANDING_PAGE_DATA.steps[0] & { animationDelay?: number }) => (
     <div
         className="flex flex-col items-center text-center animate-fade-in-up"
         style={{ animationDelay: `${animationDelay}ms` }}
     >
-        <div className="flex items-center justify-center text-blue-600 font-bold h-12 w-12 rounded-full border-2 border-blue-600 mb-4 text-xl">
+        <div className="flex items-center justify-center text-blue-600 font-bold h-12 w-12 rounded-full border-2 border-blue-600 bg-white mb-4 text-xl">
             {number}
         </div>
         <h3 className="font-bold text-xl text-slate-900">{title}</h3>
@@ -161,37 +103,71 @@ const StepCard = ({ number, title, description, animationDelay = 0 }: {
     </div>
 );
 
+
 // --- Page Sections ---
 
 const HeroSection = () => (
-    <Section className="text-center pt-12 pb-24 animate-fade-in-up">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900">
-            Find Your Next Hire with Interview<span className="text-blue-600">AI</span>
+    <Section className="text-center pt-16 pb-20 animate-fade-in-up">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-slate-900">
+            Find Your Next Hire with <br />
+            <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                InterviewAI
+            </span>
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-6">
             Revolutionize your hiring with AI-driven interviews. Get objective scoring, custom rubrics, and detailed reports to find the perfect candidate—faster.
         </p>
-        <HeroActions /> {/* Using the client component defined at the top of the file */}
-        <div className="pt-16 animate-fade-in-up" style={{ animationDelay: "500ms" }}>
-            <div className="mx-auto max-w-5xl rounded-lg border bg-white shadow-lg overflow-hidden">
+        <HeroActions /> {/* Using the enhanced client component */}
+        <div className="mt-16 animate-fade-in-up" style={{ animationDelay: "500ms" }}>
+            <div className="relative mx-auto max-w-5xl rounded-xl border bg-white/70 shadow-2xl shadow-slate-900/10 backdrop-blur-sm overflow-hidden p-2">
                 <video
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto rounded-lg object-cover"
                     src="/Lottie_Character_homepage.mp4"
                     autoPlay
                     muted
                     loop
                     playsInline
                 />
+                <div className="absolute top-2 left-4 flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
             </div>
         </div>
     </Section>
 );
 
+const LogoCloudSection = () => (
+    <div className="py-8 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+        <div className="container mx-auto text-center">
+            <p className="text-sm font-semibold text-slate-500 mb-6">
+                WHY TEAMS CHOOSE INTERVIEWAI
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                <div>
+                    <h3 className="text-3xl font-bold text-blue-600">70%</h3>
+                    <p className="text-slate-600">Less time spent on screening</p>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold text-blue-600">90%</h3>
+                    <p className="text-slate-600">Improved candidate experience</p>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold text-blue-600">24/7</h3>
+                    <p className="text-slate-600">AI-powered interviewing availability</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+);
+
 const FeaturesSection = () => (
-    <Section aria-labelledby="a-smarter-way-to-hire">
+    <Section aria-labelledby="features-title" className="bg-slate-50 rounded-2xl">
         <SectionHeader
-            title="A Smarter Way to Hire"
-            description="Core features designed to save you time and improve quality."
+            title={<>A <span className="text-blue-600">Smarter</span> Way to Hire</>}
+            description="Our core features are designed to save you time, eliminate bias, and improve the quality of your hires."
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {LANDING_PAGE_DATA.features.map((feature, index) => (
@@ -202,36 +178,22 @@ const FeaturesSection = () => (
 );
 
 const HowItWorksSection = () => (
-    <Section className="bg-slate-50 rounded-2xl animate-fade-in-up" aria-labelledby="get-started-in-3-easy-steps">
-        <SectionHeader title="Get Started in 3 Easy Steps" description="" />
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {LANDING_PAGE_DATA.steps.map((step, index) => (
-                <StepCard key={step.title} {...step} animationDelay={index * 150} />
-            ))}
-        </div>
-    </Section>
-);
-
-const TestimonialSection = () => (
-    <Section className="text-center animate-fade-in-up">
-        <div className="max-w-3xl mx-auto">
-            <div
-                className="flex justify-center text-yellow-400 mb-4"
-                aria-label="5 out of 5 stars"
-            >
-                {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+    <Section aria-labelledby="how-it-works-title">
+        <SectionHeader title="Get Started in 3 Easy Steps" description="Launch your first AI-powered interview campaign in minutes." />
+        <div className="relative max-w-4xl mx-auto">
+            <div className="absolute hidden md:block top-6 left-0 w-full h-0.5 bg-slate-200" />
+            <div className="relative grid md:grid-cols-3 gap-12 md:gap-8">
+                {LANDING_PAGE_DATA.steps.map((step, index) => (
+                    <StepCard key={step.title} {...step} animationDelay={index * 150} />
                 ))}
             </div>
-            <blockquote className="text-2xl italic text-slate-800">
-                "InterviewAI has been a game-changer. We cut screening time by 70% and the quality of finalists has never been higher."
-            </blockquote>
-            <p className="mt-6 font-semibold text-slate-600">— Jane Doe, Head of Talent at TechCorp</p>
         </div>
     </Section>
 );
 
+
 export function FinalCtaSection() {
+    // This is a client component because it uses hooks
     const { isSignedIn } = useUser();
     const { openSignIn } = useClerk();
     const router = useRouter();
@@ -247,18 +209,20 @@ export function FinalCtaSection() {
     };
 
     return (
-        <section className="bg-slate-900 text-white rounded-2xl p-16 text-center animate-fade-in-up">
-            <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Hiring?</h2>
-            <p className="text-slate-300 max-w-xl mx-auto mb-8">
-                Stop sorting through resumes. Start having meaningful, data-backed conversations.
-            </p>
-            <button
-                onClick={goCreateJob}
-                className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-200 transition-colors"
-            >
-                Create Your First Job Free
-                <ArrowRight className="h-5 w-5 ml-2" />
-            </button>
+        <section className="relative bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-12 md:p-16 text-center overflow-hidden animate-fade-in-up">
+            <div className="relative">
+                <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Hiring?</h2>
+                <p className="text-slate-300 max-w-xl mx-auto mb-8">
+                    Stop sorting through resumes. Start having meaningful, data-backed conversations that lead to better hires.
+                </p>
+                <button
+                    onClick={goCreateJob}
+                    className="inline-flex items-center justify-center rounded-md bg-white px-6 py-3 text-base font-medium text-slate-900 hover:bg-slate-200 transition-colors shadow-lg"
+                >
+                    Create Your First Job Free
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                </button>
+            </div>
         </section>
     );
 }
@@ -267,14 +231,65 @@ export function FinalCtaSection() {
 export default function LandingPage() {
     return (
         <>
-            <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]" />
-            <main className="container mx-auto px-4 py-20">
+            <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+                {/* Aurora background effect */}
+                <div className="absolute -z-20 top-0 left-1/2 -translate-x-1/2 w-[60%] h-[50%] bg-gradient-to-br from-blue-500/20 to-cyan-500/20 blur-3xl opacity-50" />
+            </div>
+            <main className="container mx-auto px-4 py-8 md:py-12">
                 <HeroSection />
+                <LogoCloudSection />
                 <FeaturesSection />
                 <HowItWorksSection />
-                <TestimonialSection />
                 <FinalCtaSection />
             </main>
         </>
+    );
+}
+
+
+// --- Enhanced Client Component (HeroActions) ---
+export function HeroActions() {
+    const router = useRouter();
+    const { isSignedIn, user } = useUser();
+    const { openSignIn } = useClerk();
+
+    const goEmployer = () => {
+        if (!isSignedIn) {
+            return openSignIn({ afterSignInUrl: "/dashboard", afterSignUpUrl: "/onboarding?intent=employer" });
+        }
+        const role = user?.publicMetadata?.role;
+        if (!role) return router.push("/onboarding?intent=employer");
+        if (role !== "employer") return router.push("/onboarding");
+        router.push("/dashboard");
+    };
+
+    const goApplicant = () => {
+        router.push("/interviews/join");
+    };
+
+    const primaryButtonText = isSignedIn ? "Go to Dashboard" : "Start Hiring Free";
+
+    return (
+        <div className="flex flex-col sm:flex-row items-start justify-center gap-4 pt-8">
+            <div className="flex flex-col items-center w-full sm:w-auto">
+                <button
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+                    onClick={goEmployer}
+                >
+                    {primaryButtonText}
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                </button>
+                <p className="text-xs text-slate-500 mt-2">For Employers & Hiring Managers</p>
+            </div>
+            <div className="flex flex-col items-center w-full sm:w-auto">
+                <button
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border bg-white px-6 py-3 text-base font-medium hover:bg-slate-100 transition-colors shadow-sm"
+                    onClick={goApplicant}
+                >
+                    Join an Interview
+                </button>
+                <p className="text-xs text-slate-500 mt-2">For Applicants</p>
+            </div>
+        </div>
     );
 }
