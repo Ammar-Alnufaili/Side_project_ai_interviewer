@@ -3,7 +3,16 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Bot, BarChart3, FileText, Star, Code, Briefcase, BarChart } from "lucide-react";
+import {
+    ArrowRight,
+    Bot,
+    BarChart3,
+    FileText,
+    Star,
+    Code,
+    Briefcase,
+    BarChart,
+} from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
 
 // --- Data Abstraction ---
@@ -12,29 +21,45 @@ const LANDING_PAGE_DATA = {
         {
             icon: <Bot className="h-8 w-8 text-blue-500" />,
             title: "AI Interviewer",
-            description: "Intelligent AI conducts interviews with natural conversation and relevant follow-ups.",
+            description:
+                "Intelligent AI conducts interviews with natural conversation and relevant follow-ups.",
             imageSrc: "/robot1.png",
-            imageAlt: "An illustration of a friendly robot, representing the AI interviewer."
+            imageAlt: "An illustration of a friendly robot, representing the AI interviewer.",
         },
         {
             icon: <BarChart3 className="h-8 w-8 text-blue-500" />,
             title: "Smart Scoring",
-            description: "Weighted criteria and evidence-backed scores provide objective, data-driven insights.",
+            description:
+                "Weighted criteria and evidence-backed scores provide objective, data-driven insights.",
             imageSrc: "/scoring1.png",
-            imageAlt: "An illustration of charts and graphs, representing smart scoring."
+            imageAlt: "An illustration of charts and graphs, representing smart scoring.",
         },
         {
             icon: <FileText className="h-8 w-8 text-blue-500" />,
             title: "Detailed Reports",
-            description: "Get comprehensive reports outlining candidate strengths, potential risks, and clear recommendations.",
+            description:
+                "Get comprehensive reports outlining candidate strengths, potential risks, and clear recommendations.",
             imageSrc: "/report1.png",
-            imageAlt: "An illustration of a document with analytics, representing detailed reports."
+            imageAlt: "An illustration of a document with analytics, representing detailed reports.",
         },
     ],
     steps: [
-        { number: "1", title: "Create a Job", description: "Define the role and set your custom scoring rubric in minutes." },
-        { number: "2", title: "Invite Candidates", description: "Share a unique link and let our AI handle screening 24/7." },
-        { number: "3", title: "Review & Hire", description: "Analyze detailed reports and hire the best talent with confidence." },
+        {
+            number: "1",
+            title: "Create a Job",
+            description: "Define the role and set your custom scoring rubric in minutes.",
+        },
+        {
+            number: "2",
+            title: "Invite Candidates",
+            description: "Share a unique link and let our AI handle screening 24/7.",
+        },
+        {
+            number: "3",
+            title: "Review & Hire",
+            description:
+                "Analyze detailed reports and hire the best talent with confidence.",
+        },
     ],
     logos: [
         { name: "TechCorp", icon: <Briefcase className="h-8 w-8" /> },
@@ -46,23 +71,46 @@ const LANDING_PAGE_DATA = {
 };
 
 // --- Reusable & Section Components ---
-
-const Section = ({ children, className = "", ...props }: React.ComponentProps<"section">) => (
+const Section = ({
+                     children,
+                     className = "",
+                     ...props
+                 }: React.ComponentProps<"section">) => (
     <section className={`py-20 md:py-28 ${className}`} {...props}>
         {children}
     </section>
 );
 
-const SectionHeader = ({ title, description }: { title: React.ReactNode; description: string }) => (
+const SectionHeader = ({
+                           title,
+                           description,
+                       }: {
+    title: React.ReactNode;
+    description: string;
+}) => (
     <div className="text-center mb-12 md:mb-16">
-        <h2 id={typeof title === 'string' ? title.toLowerCase().replace(/\s+/g, '-') : undefined} className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
+        <h2
+            id={
+                typeof title === "string"
+                    ? title.toLowerCase().replace(/\s+/g, "-")
+                    : undefined
+            }
+            className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight"
+        >
             {title}
         </h2>
         <p className="text-lg text-slate-600 mt-4 max-w-2xl mx-auto">{description}</p>
     </div>
 );
 
-const FeatureCard = ({ icon, title, description, imageSrc, imageAlt, animationDelay = 0 }: typeof LANDING_PAGE_DATA.features[0] & { animationDelay?: number }) => (
+const FeatureCard = ({
+                         icon,
+                         title,
+                         description,
+                         imageSrc,
+                         imageAlt,
+                         animationDelay = 0,
+                     }: typeof LANDING_PAGE_DATA.features[0] & { animationDelay?: number }) => (
     <div
         className="relative p-[1px] overflow-hidden rounded-2xl group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in-up bg-slate-100/50"
         style={{ animationDelay: `${animationDelay}ms` }}
@@ -85,12 +133,16 @@ const FeatureCard = ({ icon, title, description, imageSrc, imageAlt, animationDe
                 <p className="mt-2 text-slate-600">{description}</p>
             </div>
         </div>
-        {/* Glow effect on hover */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
     </div>
 );
 
-const StepCard = ({ number, title, description, animationDelay = 0 }: typeof LANDING_PAGE_DATA.steps[0] & { animationDelay?: number }) => (
+const StepCard = ({
+                      number,
+                      title,
+                      description,
+                      animationDelay = 0,
+                  }: typeof LANDING_PAGE_DATA.steps[0] & { animationDelay?: number }) => (
     <div
         className="flex flex-col items-center text-center animate-fade-in-up"
         style={{ animationDelay: `${animationDelay}ms` }}
@@ -103,21 +155,21 @@ const StepCard = ({ number, title, description, animationDelay = 0 }: typeof LAN
     </div>
 );
 
-
 // --- Page Sections ---
-
 const HeroSection = () => (
     <Section className="text-center pt-16 pb-20 animate-fade-in-up">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-slate-900">
             Find Your Next Hire with <br />
             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                InterviewAI
-            </span>
+        InterviewAI
+      </span>
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-6">
-            Revolutionize your hiring with AI-driven interviews. Get objective scoring, custom rubrics, and detailed reports to find the perfect candidate—faster.
+            Revolutionize your hiring with AI-driven interviews. Get objective
+            scoring, custom rubrics, and detailed reports to find the perfect
+            candidate—faster.
         </p>
-        <HeroActions /> {/* Using the enhanced client component */}
+        <HeroActions />
         <div className="mt-16 animate-fade-in-up" style={{ animationDelay: "500ms" }}>
             <div className="relative mx-auto max-w-5xl rounded-xl border bg-white/70 shadow-2xl shadow-slate-900/10 backdrop-blur-sm overflow-hidden p-2">
                 <video
@@ -138,35 +190,14 @@ const HeroSection = () => (
     </Section>
 );
 
-const LogoCloudSection = () => (
-    <div className="py-8 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
-        <div className="container mx-auto text-center">
-            <p className="text-sm font-semibold text-slate-500 mb-6">
-                WHY TEAMS CHOOSE INTERVIEWAI
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-                <div>
-                    <h3 className="text-3xl font-bold text-blue-600">70%</h3>
-                    <p className="text-slate-600">Less time spent on screening</p>
-                </div>
-                <div>
-                    <h3 className="text-3xl font-bold text-blue-600">90%</h3>
-                    <p className="text-slate-600">Improved candidate experience</p>
-                </div>
-                <div>
-                    <h3 className="text-3xl font-bold text-blue-600">24/7</h3>
-                    <p className="text-slate-600">AI-powered interviewing availability</p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-);
-
 const FeaturesSection = () => (
     <Section aria-labelledby="features-title" className="bg-slate-50 rounded-2xl">
         <SectionHeader
-            title={<>A <span className="text-blue-600">Smarter</span> Way to Hire</>}
+            title={
+                <>
+                    A <span className="text-blue-600">Smarter</span> Way to Hire
+                </>
+            }
             description="Our core features are designed to save you time, eliminate bias, and improve the quality of your hires."
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -179,7 +210,10 @@ const FeaturesSection = () => (
 
 const HowItWorksSection = () => (
     <Section aria-labelledby="how-it-works-title">
-        <SectionHeader title="Get Started in 3 Easy Steps" description="Launch your first AI-powered interview campaign in minutes." />
+        <SectionHeader
+            title="Get Started in 3 Easy Steps"
+            description="Launch your first AI-powered interview campaign in minutes."
+        />
         <div className="relative max-w-4xl mx-auto">
             <div className="absolute hidden md:block top-6 left-0 w-full h-0.5 bg-slate-200" />
             <div className="relative grid md:grid-cols-3 gap-12 md:gap-8">
@@ -191,9 +225,7 @@ const HowItWorksSection = () => (
     </Section>
 );
 
-
 export function FinalCtaSection() {
-    // This is a client component because it uses hooks
     const { isSignedIn } = useUser();
     const { openSignIn } = useClerk();
     const router = useRouter();
@@ -201,19 +233,22 @@ export function FinalCtaSection() {
     const goCreateJob = () => {
         if (!isSignedIn) {
             return openSignIn({
-                afterSignInUrl: "/jobs/create",
-                afterSignUpUrl: "/onboarding?intent=employer",
+                afterSignInUrl: "/dashboard",
+                afterSignUpUrl: "/dashboard",
             });
         }
-        router.push("/jobs/create");
+        router.push("/dashboard");
     };
 
     return (
         <section className="relative bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-12 md:p-16 text-center overflow-hidden animate-fade-in-up">
             <div className="relative">
-                <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Hiring?</h2>
+                <h2 className="text-4xl font-bold mb-4">
+                    Ready to Transform Your Hiring?
+                </h2>
                 <p className="text-slate-300 max-w-xl mx-auto mb-8">
-                    Stop sorting through resumes. Start having meaningful, data-backed conversations that lead to better hires.
+                    Stop sorting through resumes. Start having meaningful, data-backed
+                    conversations that lead to better hires.
                 </p>
                 <button
                     onClick={goCreateJob}
@@ -232,12 +267,10 @@ export default function LandingPage() {
     return (
         <>
             <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-                {/* Aurora background effect */}
                 <div className="absolute -z-20 top-0 left-1/2 -translate-x-1/2 w-[60%] h-[50%] bg-gradient-to-br from-blue-500/20 to-cyan-500/20 blur-3xl opacity-50" />
             </div>
             <main className="container mx-auto px-4 py-8 md:py-12">
                 <HeroSection />
-                <LogoCloudSection />
                 <FeaturesSection />
                 <HowItWorksSection />
                 <FinalCtaSection />
@@ -246,8 +279,7 @@ export default function LandingPage() {
     );
 }
 
-
-// --- Enhanced Client Component (HeroActions) ---
+// --- Hero Actions with Clerk check ---
 export function HeroActions() {
     const router = useRouter();
     const { isSignedIn, user } = useUser();
@@ -255,11 +287,18 @@ export function HeroActions() {
 
     const goEmployer = () => {
         if (!isSignedIn) {
-            return openSignIn({ afterSignInUrl: "/dashboard", afterSignUpUrl: "/onboarding?intent=employer" });
+            return openSignIn({
+                afterSignInUrl: "/dashboard",
+                afterSignUpUrl: "/dashboard",
+            });
         }
+
+        // Check role
         const role = user?.publicMetadata?.role;
-        if (!role) return router.push("/onboarding?intent=employer");
-        if (role !== "employer") return router.push("/onboarding");
+        if (role !== "employer") {
+            return router.push("/interviews/join");
+        }
+
         router.push("/dashboard");
     };
 
@@ -279,7 +318,9 @@ export function HeroActions() {
                     {primaryButtonText}
                     <ArrowRight className="h-5 w-5 ml-2" />
                 </button>
-                <p className="text-xs text-slate-500 mt-2">For Employers & Hiring Managers</p>
+                <p className="text-xs text-slate-500 mt-2">
+                    For Employers & Hiring Managers
+                </p>
             </div>
             <div className="flex flex-col items-center w-full sm:w-auto">
                 <button

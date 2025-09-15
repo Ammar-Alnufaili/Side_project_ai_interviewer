@@ -8,10 +8,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     const { userId } = await auth();
     if (!userId) redirect("/auth/sign-in");
 
-    // If you want to enforce employer-only dashboard:
-    const user = await currentUser();
-    const role = (user?.publicMetadata?.role as "employer" | "applicant" | undefined) || undefined;
-    if (role !== "employer") redirect("/onboarding");
 
     return (
         <RQProvider>
