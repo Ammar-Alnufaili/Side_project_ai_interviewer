@@ -1,58 +1,49 @@
+// src/app/interviews/join/page.tsx
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function JoinInterviewPage() {
-    const [fullName, setFullName] = useState("");
+    const [name, setName] = useState("");
     const [code, setCode] = useState("");
-    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleJoin = () => {
+        if (!name || !code) return;
 
-        // 🔜 Later: call FastAPI to validate code and fetch Zoom URL
-        setTimeout(() => {
-            alert(`Joining interview with code ${code} as ${fullName}`);
-            setLoading(false);
-            // Example: window.location.href = zoomUrl;
-        }, 1000);
+        // Redirect to Step 1 of setup flow
+        router.push(`/setup/${code}/step1?name=${encodeURIComponent(name)}`);
     };
 
     return (
-        <div className="max-w-md mx-auto py-20">
-            <h1 className="text-2xl font-bold mb-6">Join an Interview</h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium">Full Name</label>
-                    <input
-                        type="text"
-                        required
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="mt-1 w-full rounded-md border px-3 py-2"
-                        placeholder="Enter your name"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium">Interview Code</label>
-                    <input
-                        type="text"
-                        required
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        className="mt-1 w-full rounded-md border px-3 py-2"
-                        placeholder="Enter the code from your employer"
-                    />
-                </div>
+        <div className="p-6 max-w-md mx-auto">
+            <h1 className="text-2xl font-bold mb-6 text-center">Join an Interview</h1>
+
+            <div className="space-y-4">
+                <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="border rounded p-2 w-full"
+                />
+
+                <input
+                    type="text"
+                    placeholder="Interview Code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="border rounded p-2 w-full"
+                />
+
                 <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-md bg-blue-600 text-white py-2 hover:bg-blue-700 disabled:opacity-50"
+                    onClick={handleJoin}
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                 >
-                    {loading ? "Joining..." : "Join Interview"}
+                    Join Interview
                 </button>
-            </form>
+            </div>
         </div>
     );
 }
