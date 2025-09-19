@@ -4,6 +4,7 @@
 
 import { usePathname } from "next/navigation";
 
+
 const steps = [
     { step: 1, label: "Position Details & Consent" },
     { step: 2, label: "Interview Mode" },
