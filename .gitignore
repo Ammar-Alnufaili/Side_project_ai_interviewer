@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# env files (real secrets stay local, only commit template)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# example env (safe to commit, no secrets)
+!.env.example
