@@ -1,6 +1,7 @@
 // src/app/(candidate)/setup/[token]/layout.tsx
 "use client";
 
+
 import { usePathname } from "next/navigation";
 
 const steps = [
