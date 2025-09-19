@@ -296,7 +296,7 @@ export function HeroActions() {
         // Check role
         const role = user?.publicMetadata?.role;
         if (role !== "employer") {
-            return router.push("/interviews/join");
+            return router.push("/dashboard");
         }
 
         router.push("/dashboard");
