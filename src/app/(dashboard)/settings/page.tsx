@@ -109,7 +109,7 @@ const settings = [
 
 const SettingsPage = () => {
     return (
-        <main className="max-w-7xl mx-auto p-6 md:p-8 min-h-screen bg-gray-50 text-gray-800">
+        <main className="max-w-7xl mx-auto p-6 md:p-8 min-h-screen bg-gray-0 text-gray-800">
             {/* Back link */}
             <div className="mb-6">
                 <Link

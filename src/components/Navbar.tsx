@@ -1,52 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import Image from "next/image";
+import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/nextjs";
 
 export default function Navbar() {
-    const pathname = usePathname();
-    const router = useRouter();
-
     return (
-        <header className="border-b bg-white">
-            <nav className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
-                <Link href="/" className="font-semibold text-blue-600">AI Interviewer</Link>
-
-                <div className="flex items-center gap-4">
-                    <Link
-                        href="/features"
-                        className={`text-sm hover:text-blue-600 ${pathname === "/features" ? "text-blue-600 font-medium" : "text-gray-700"}`}
-                    >
-                        Features
-                    </Link>
-
-                    <SignedOut>
-                        <Link
-                            href="/auth/sign-in"
-                            className="text-sm hover:text-blue-600 text-gray-700"
-                        >
-                            Sign in
-                        </Link>
-                        <Link
-                            href="/auth/sign-up"
-                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                        >
-                            Sign up
-                        </Link>
-                    </SignedOut>
-
-                    <SignedIn>
-                        <Link
-                            href="/dashboard"
-                            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-neutral-100"
-                        >
-                            Dashboard
-                        </Link>
-                        <UserButton afterSignOutUrl="/" />
-                    </SignedIn>
+        <header className="w-full bg-[#1A2535] text-white px-4 sm:px-8 py-4 shadow-md z-50">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+                {/* Logo */}
+                <div className="flex items-center gap-2">
+                    <Image
+                        src="/ai.png" // change this to your logo path
+                        alt="AI Interviewer Logo"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 object-contain"
+                    />
+                    <span className="text-2xl font-bold">AI Interviewer</span>
                 </div>
-            </nav>
+
+                {/* Navigation */}
+                <nav>
+                    <ul className="flex flex-wrap gap-4 sm:gap-6 text-sm font-medium items-center">
+                        <li>
+                            <Link href="/" className="hover:text-[#4FC3F7]">
+                                🏠 Home
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/dashboard" className="hover:text-[#4FC3F7]">
+                                📊 Dashboard
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/settings" className="hover:text-[#4FC3F7]">
+                                ⚙️ Settings
+                            </Link>
+                        </li>
+
+                        {/* Auth Buttons */}
+                        <SignedIn>
+                            <li className="ml-2">
+                                <UserButton afterSignOutUrl="/" />
+                            </li>
+                        </SignedIn>
+                        <SignedOut>
+                            <li className="ml-2">
+                                <SignInButton mode="modal">
+                                    <button className="bg-[#4FC3F7] px-4 py-2 rounded-full text-sm hover:bg-[#38bdf8] transition">
+                                        Sign In
+                                    </button>
+                                </SignInButton>
+                            </li>
+                        </SignedOut>
+                    </ul>
+                </nav>
+            </div>
         </header>
     );
 }
