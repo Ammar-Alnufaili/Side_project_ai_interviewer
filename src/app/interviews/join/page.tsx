@@ -20,11 +20,13 @@ export default function JoinInterviewPage() {
 
     const handleJoin = () => {
         if (!name || !code) return;
-        router.push(`/setup/${code}/step1?name=${encodeURIComponent(name)}`);
+        // CORRECTED LINE: Changed '/step1?name=' to '?step=1&name='
+        router.push(`/setup/${code}?step=1&name=${encodeURIComponent(name)}`);
     };
 
     const handlePass = () => {
-        router.push("/setup/test123/step1");
+        // CORRECTED LINE: Changed '/step1' to '?step=1'
+        router.push("/setup/test123?step=1");
     };
 
 
@@ -141,5 +143,3 @@ export default function JoinInterviewPage() {
         </main>
     );
 }
-
-// End of src/app/interviews/join/page.tsx
