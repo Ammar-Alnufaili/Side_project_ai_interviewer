@@ -12,15 +12,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <ClerkProvider>
-            <html lang="en">
-            <body className="flex flex-col min-h-screen bg-neutral-50 text-neutral-900">
+            <html lang="en" className="h-full">
+            <body className="flex min-h-screen flex-col bg-[#f5f8fe] text-neutral-900">
             {/* Navbar at the top */}
             <Navbar />
 
-            {/* Main content grows to fill space */}
+            {/* Main content fills space */}
             <main className="flex-grow">{children}</main>
 
-            {/* Footer pushed to the bottom */}
+            {/* Footer stays at bottom */}
             <Footer />
             </body>
             </html>

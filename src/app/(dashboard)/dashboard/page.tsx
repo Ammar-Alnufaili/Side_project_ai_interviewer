@@ -11,20 +11,20 @@ import {
     ChevronRight,
     X,
     ArrowLeft,
-    PlayCircle,
-    FileText,
-    Settings,
+    PlayCircle, // New icon
+    FileText,   // New icon
+    Settings,   // New icon
 } from "lucide-react";
-
-// Import lottie-player web component
-import "@lottiefiles/lottie-player";
+import Lottie from "lottie-react";
+// TODO: Replace with a more relevant animation (e.g., robot, microphone)
 
 /* =======================================
  * Types & helpers
- * ======================================= */
+ * =======================================
+ */
 export type Interview = {
     id: number;
-    title: string;
+    title: string; // e.g., "Senior Frontend Developer"
     description: string;
     color: string;
     category: "behavioral" | "technical";
@@ -39,7 +39,8 @@ type SeniorityLevel = "Junior" | "Mid-level" | "Senior";
 
 /* =======================================
  * Component
- * ======================================= */
+ * =======================================
+ */
 export default function DashboardInterviews() {
     const router = useRouter();
 
@@ -69,12 +70,12 @@ export default function DashboardInterviews() {
 
     // Creation flow
     const [creationStep, setCreationStep] = useState<1 | 2>(1);
-    const [pickedType, setPickedType] = useState<
-        "behavioral" | "technical" | null
-    >(null);
+    const [pickedType, setPickedType] = useState<"behavioral" | "technical" | null>(
+        null
+    );
 
-    // Technical wizard
-    const [tStep, setTStep] = useState<0 | 1 | 2 | 3>(0);
+    // Technical interview setup wizard
+    const [tStep, setTStep] = useState<0 | 1 | 2 | 3>(0); // 1=stack, 2=screening, 3=level confirm
     const [tStack, setTStack] = useState<TechStack | null>(null);
     const [tWantsScreening, setTWantsScreening] = useState<boolean | null>(null);
     const [seniority, setSeniority] = useState<SeniorityLevel>("Mid-level");
@@ -85,6 +86,7 @@ export default function DashboardInterviews() {
         setLoading(true);
         setError(null);
         try {
+            // TODO: Update API endpoint
             const res = await fetch("/api/interviews");
             if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
             const data = await res.json();
@@ -113,13 +115,14 @@ export default function DashboardInterviews() {
             .sort((a, b) => a.title.localeCompare(b.title));
     }, [interviews, searchQuery, activeCat]);
 
-    // Collapse if expanded not visible
+    // Collapse if expanded item no longer visible
     useEffect(() => {
         if (!expandedKey) return;
         const exists = filteredInterviews.some((i) => makeRowKey(i) === expandedKey);
         if (!exists) setExpandedKey(null);
     }, [filteredInterviews, expandedKey]);
 
+    // Collapse on filter/search changes
     useEffect(() => {
         setExpandedKey(null);
     }, [searchQuery, activeCat]);
@@ -151,6 +154,8 @@ export default function DashboardInterviews() {
         resetTechWizard();
     };
 
+
+
     const openModal = (i?: Interview) => {
         if (i) {
             setForm({
@@ -166,6 +171,82 @@ export default function DashboardInterviews() {
             resetForm();
         }
         setShowModal(true);
+    };
+
+    // Create/Save (Behavioral or Edit)
+    const saveInterview = async () => {
+        if (pickedType !== "technical" && !form.title.trim()) {
+            setFormError("Interview title is required.");
+            return;
+        }
+
+        const method = editingId ? "PUT" : "POST";
+        const payload = editingId
+            ? { ...form, id: editingId }
+            : { ...form, category: pickedType ?? "behavioral" };
+
+        const res = await fetch("/api/interviews", { // TODO: Update API endpoint
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            setFormError("Failed to save interview.");
+            return;
+        }
+        setShowModal(false);
+        await fetchInterviews();
+        resetForm();
+    };
+
+    const createOneTechnicalInterview = async (title: string, desc = "") => {
+        const res = await fetch("/api/interviews", { // TODO: Update API endpoint
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title,
+                description: desc,
+                color: "#0ea5e9", // A different default for technical
+                category: "technical",
+            }),
+        });
+        if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            throw new Error(txt || "Failed creating technical interview");
+        }
+        return res.json();
+    };
+
+    // Creator for technical interviews from the wizard
+    const createTechnicalInterview = async () => {
+        if (!tStack || tBusy) return;
+        setTBusy(true);
+        try {
+            const suffix = tWantsScreening ? ` • ${seniority}` : "";
+            const title = `${tStack.charAt(0).toUpperCase()}${tStack.slice(1)} Interview${suffix}`;
+
+            await createOneTechnicalInterview(title, "Created via technical interview setup");
+
+            setShowModal(false);
+            await fetchInterviews();
+            resetForm();
+        } catch (e: any) {
+            setFormError(e?.message || "Failed to create interview");
+        } finally {
+            setTBusy(false);
+        }
+    };
+
+    const deleteInterview = async () => {
+        if (!deletingId) return;
+        await fetch("/api/interviews", { // TODO: Update API endpoint
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: deletingId }),
+        });
+        setShowConfirm(false);
+        setDeletingId(null);
+        await fetchInterviews();
     };
 
     // Animations
@@ -185,20 +266,26 @@ export default function DashboardInterviews() {
 
     const hasTechnical = interviews.some((i) => i.category === "technical");
 
+    // Wizard back logic
+    const backFromWizard = () => {
+        if (tStep === 1) {
+            setCreationStep(1);
+            setPickedType(null);
+            resetTechWizard();
+        } else if (tStep === 2) {
+            setTStep(1);
+            setTWantsScreening(null);
+        } else if (tStep === 3) {
+            setTStep(2);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#f5f8fe] px-4 py-10 sm:px-6">
             {/* Header */}
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-4">
-                    <div className="h-16 w-16">
-                        <lottie-player
-                            src="/interview.lottie"
-                            background="transparent"
-                            speed="1"
-                            loop
-                            autoplay
-                        ></lottie-player>
-                    </div>
+
                     <h1 className="text-3xl font-bold tracking-tight">My Interviews</h1>
                     <div className="relative">
                         <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -221,7 +308,43 @@ export default function DashboardInterviews() {
                 </motion.button>
             </div>
 
-            {/* Empty state */}
+            {/* Filters */}
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="mr-1 inline-flex items-center gap-1 text-sm text-gray-500">
+          <Filter className="h-4 w-4" /> Filter:
+        </span>
+
+                {(["all", "behavioral"] as const).map((c) => (
+                    <button
+                        key={c}
+                        onClick={() => setActiveCat(c)}
+                        className={cx(
+                            "rounded-full border px-3 py-1.5 text-sm transition",
+                            activeCat === c
+                                ? "border-blue-600 bg-blue-50 text-blue-700"
+                                : "hover:bg-gray-50"
+                        )}
+                    >
+                        {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </button>
+                ))}
+
+                {hasTechnical && (
+                    <button
+                        onClick={() => setActiveCat("technical")}
+                        className={cx(
+                            "rounded-full border px-3 py-1.5 text-sm transition",
+                            activeCat === "technical"
+                                ? "border-blue-600 bg-blue-50 text-blue-700"
+                                : "hover:bg-gray-50"
+                        )}
+                    >
+                        Technical
+                    </button>
+                )}
+            </div>
+
+            {/* Grid */}
             {loading ? (
                 <div className="grid items-start grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                     {Array.from({ length: 8 }).map((_, i) => (
@@ -237,15 +360,7 @@ export default function DashboardInterviews() {
                 </div>
             ) : filteredInterviews.length === 0 ? (
                 <div className="mx-auto max-w-md rounded-2xl border bg-white p-6 text-center shadow-sm">
-                    <div className="mx-auto mb-3 h-28 w-28">
-                        <lottie-player
-                            src="/interview.lottie"
-                            background="transparent"
-                            speed="1"
-                            loop
-                            autoplay
-                        ></lottie-player>
-                    </div>
+
                     <p className="text-gray-600">No interviews match your search.</p>
                 </div>
             ) : (
@@ -259,6 +374,7 @@ export default function DashboardInterviews() {
                         const rowKey = makeRowKey(i);
                         const isExpanded = expandedKey === rowKey;
 
+                        // Actions available for each interview card
                         const items = [
                             {
                                 href: `/interviews/${i.id}/start`,
@@ -312,9 +428,7 @@ export default function DashboardInterviews() {
                                         <div
                                             className={cx(
                                                 "flex items-center gap-2 transition-opacity duration-200 z-10",
-                                                isExpanded
-                                                    ? "opacity-100"
-                                                    : "opacity-0 group-hover:opacity-100"
+                                                isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                                             )}
                                         >
                                             <button
@@ -354,7 +468,7 @@ export default function DashboardInterviews() {
                                     </div>
                                 </div>
 
-                                {/* Expanded Body */}
+                                {/* Body */}
                                 <AnimatePresence initial={false}>
                                     {isExpanded && (
                                         <motion.div
@@ -378,12 +492,12 @@ export default function DashboardInterviews() {
                                                             onClick={() => router.push(it.href)}
                                                             className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2"
                                                         >
-                              <span className="h-6 w-6 grid place-items-center">
-                                {it.icon}
-                              </span>
+                                                            <span className="h-6 w-6 grid place-items-center">
+                                                                {it.icon}
+                                                            </span>
                                                             <span className="font-medium text-gray-900">
-                                {it.label}
-                              </span>
+                                                                {it.label}
+                                                            </span>
                                                             <ChevronRight className="h-4 w-4 text-gray-400" />
                                                         </button>
                                                     ))}
@@ -397,6 +511,316 @@ export default function DashboardInterviews() {
                     })}
                 </motion.div>
             )}
+
+            {/* Create / Edit Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+                    >
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 20, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 240, damping: 22 }}
+                            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
+                        >
+                            <div className="bg-gradient-to-r from-indigo-500 to-blue-500 p-4 text-white">
+                                <div className="flex items-center justify-between">
+                                    {pickedType === "technical" && creationStep === 2 && tStep > 0 ? (
+                                        <button
+                                            onClick={backFromWizard}
+                                            className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-sm hover:bg-white/15"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+                                            Back
+                                        </button>
+                                    ) : (
+                                        <span />
+                                    )}
+                                    <h3 className="text-lg font-semibold">
+                                        {editingId
+                                            ? "Edit Interview"
+                                            : creationStep === 1
+                                                ? "Create an Interview"
+                                                : pickedType === "technical"
+                                                    ? "Technical Interview Setup"
+                                                    : "New Behavioral Interview"}
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="rounded-full p-1 hover:bg-white/10"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 p-5">
+                                {formError && (
+                                    <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+                                        {formError}
+                                    </div>
+                                )}
+
+                                {/* STEP 1: Choose type */}
+                                {!editingId && creationStep === 1 && (
+                                    <div className="space-y-3">
+                                        <p className="text-sm font-medium">Choose interview type</p>
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <button
+                                                onClick={() => {
+                                                    setPickedType("behavioral");
+                                                    setForm((f) => ({ ...f, category: "behavioral" }));
+                                                    setCreationStep(2);
+                                                }}
+                                                className="rounded-xl border p-4 text-left hover:bg-gray-50"
+                                            >
+                                                <div className="text-base font-semibold">Behavioral</div>
+                                                <p className="mt-1 text-sm text-gray-600">
+                                                    Focus on soft skills, experience, and culture fit.
+                                                </p>
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setPickedType("technical");
+                                                    setForm((f) => ({ ...f, category: "technical" }));
+                                                    setCreationStep(2);
+                                                    setTStep(1); // start wizard
+                                                }}
+                                                className="rounded-xl border p-4 text-left hover:bg-gray-50"
+                                            >
+                                                <div className="text-base font-semibold">Technical</div>
+                                                <p className="mt-1 text-sm text-gray-600">
+                                                    Assess problem-solving and coding skills.
+                                                </p>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* STEP 2-A: Behavioral details */}
+                                {creationStep === 2 && pickedType === "behavioral" && (
+                                    <>
+                                        <div className="text-xs uppercase tracking-wide text-gray-500">
+                                            Type: <span className="font-semibold text-gray-800">Behavioral</span>
+                                        </div>
+
+                                        <input
+                                            value={form.title}
+                                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                            placeholder="Role Title (e.g. Product Manager)"
+                                            className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
+                                        />
+
+                                        <textarea
+                                            value={form.description}
+                                            onChange={(e) =>
+                                                setForm({ ...form, description: e.target.value })
+                                            }
+                                            placeholder="Description (optional)"
+                                            rows={4}
+                                            className="w-full rounded-lg border p-3 outline-none focus:ring-2 focus:ring-blue-300"
+                                        />
+
+                                        <div>
+                                            <p className="mb-2 text-sm font-medium">Card Color</p>
+                                            <input
+                                                type="color"
+                                                value={form.color}
+                                                onChange={(e) => setForm({ ...form, color: e.target.value })}
+                                                className="h-10 w-full cursor-pointer rounded border"
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-end gap-2 pt-2">
+                                            <button
+                                                onClick={() => {
+                                                    setShowModal(false);
+                                                    resetForm();
+                                                }}
+                                                className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={saveInterview}
+                                                disabled={!form.title.trim()}
+                                                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* STEP 2-B: Technical wizard */}
+                                {creationStep === 2 && pickedType === "technical" && (
+                                    <div className="space-y-4">
+                                        {/* Q1: Tech Stack */}
+                                        {tStep === 1 && (
+                                            <>
+                                                <p className="text-sm font-medium">
+                                                    What is the primary tech stack?
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                    {[
+                                                        { key: "javascript", label: "JavaScript" },
+                                                        { key: "python", label: "Python" },
+                                                        { key: "java", label: "Java" },
+                                                    ].map((o) => (
+                                                        <button
+                                                            key={o.key}
+                                                            onClick={() => {
+                                                                setTStack(o.key as TechStack);
+                                                                setTStep(2);
+                                                            }}
+                                                            className="rounded-xl border p-4 text-center hover:bg-gray-50"
+                                                        >
+                                                            <div className="font-semibold">{o.label}</div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Q2: Screening */}
+                                        {tStep === 2 && tStack && (
+                                            <>
+                                                <p className="text-sm font-medium">
+                                                    Include a screening question to set the difficulty level?
+                                                </p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            setTWantsScreening(true);
+                                                            setSeniority("Mid-level"); // Default result
+                                                            setTStep(3);
+                                                        }}
+                                                        disabled={tBusy}
+                                                        className="rounded-xl border p-4 text-left hover:bg-gray-50 disabled:opacity-60"
+                                                    >
+                                                        <div className="text-base font-semibold">Yes</div>
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Helps gauge seniority.
+                                                        </p>
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            setTWantsScreening(false);
+                                                            await createTechnicalInterview();
+                                                        }}
+                                                        disabled={tBusy}
+                                                        className="rounded-xl border p-4 text-left hover:bg-gray-50 disabled:opacity-60"
+                                                    >
+                                                        <div className="text-base font-semibold">No</div>
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Create standard interview.
+                                                        </p>
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Q3: Level confirm */}
+                                        {tStep === 3 && tWantsScreening && (
+                                            <>
+                                                <p className="text-sm font-medium">
+                                                    Please select the target seniority level.
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {(["Junior", "Mid-level", "Senior"] as SeniorityLevel[]).map(
+                                                        (lv) => (
+                                                            <label
+                                                                key={lv}
+                                                                className={cx(
+                                                                    "flex items-center gap-2 rounded-xl border p-3 cursor-pointer",
+                                                                    seniority === lv && "ring-2 ring-blue-300"
+                                                                )}
+                                                            >
+                                                                <input
+                                                                    type="radio"
+                                                                    name="level"
+                                                                    checked={seniority === lv}
+                                                                    onChange={() => setSeniority(lv)}
+                                                                />
+                                                                <span>{lv}</span>
+                                                            </label>
+                                                        )
+                                                    )}
+                                                </div>
+
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={backFromWizard}
+                                                        className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+                                                    >
+                                                        Back
+                                                    </button>
+                                                    <button
+                                                        onClick={createTechnicalInterview}
+                                                        disabled={tBusy}
+                                                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                                                    >
+                                                        {tBusy ? "Creating…" : "Create Interview"}
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Delete Confirm */}
+            <AnimatePresence>
+                {showConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.96, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.96, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                            className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
+                        >
+                            <h3 className="text-lg font-semibold">Confirm Delete</h3>
+                            <p className="mt-1 text-sm text-gray-600">
+                                Are you sure you want to delete this interview? This action cannot be undone.
+                            </p>
+                            <div className="mt-4 flex justify-end gap-2">
+                                <button
+                                    onClick={() => {
+                                        setShowConfirm(false);
+                                        setDeletingId(null);
+                                    }}
+                                    className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={deleteInterview}
+                                    className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
+
