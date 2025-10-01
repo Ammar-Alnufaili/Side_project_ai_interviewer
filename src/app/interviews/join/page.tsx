@@ -23,6 +23,11 @@ export default function JoinInterviewPage() {
         router.push(`/setup/${code}/step1?name=${encodeURIComponent(name)}`);
     };
 
+    const handlePass = () => {
+        router.push("/setup/test123/step1");
+    };
+
+
     return (
         <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-blue-100 font-[Poppins]">
             <div className="flex w-[95%] max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -69,13 +74,23 @@ export default function JoinInterviewPage() {
                             />
                         </div>
 
-                        {/* Button */}
-                        <button
-                            onClick={handleJoin}
-                            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
-                        >
-                            Join Interview
-                        </button>
+                        {/* Buttons row */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleJoin}
+                                className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                Join Interview
+                            </button>
+
+                            {/* New Pass button */}
+                            <button
+                                onClick={handlePass}
+                                className="flex-1 rounded-lg bg-gray-300 py-3 font-semibold text-gray-700 transition hover:bg-gray-400"
+                            >
+                                Pass
+                            </button>
+                        </div>
                     </div>
 
                     {/* Divider */}
@@ -126,3 +141,5 @@ export default function JoinInterviewPage() {
         </main>
     );
 }
+
+// End of src/app/interviews/join/page.tsx
