@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,14 +10,10 @@ import {
     Search,
     Filter,
     ChevronRight,
-    X,
-    ArrowLeft,
-    PlayCircle, // New icon
-    FileText,   // New icon
-    Settings,   // New icon
+    FileText,
+    Settings,
+    PlayCircle,
 } from "lucide-react";
-import Lottie from "lottie-react";
-// TODO: Replace with a more relevant animation (e.g., robot, microphone)
 
 /* =======================================
  * Types & helpers
@@ -33,9 +30,6 @@ export type Interview = {
 const makeRowKey = (i: Interview) => `${i.id}`;
 const cx = (...xs: Array<string | false | null | undefined>) =>
     xs.filter(Boolean).join(" ");
-
-type TechStack = "javascript" | "python" | "java";
-type SeniorityLevel = "Junior" | "Mid-level" | "Senior";
 
 /* =======================================
  * Component
@@ -55,38 +49,14 @@ export default function DashboardInterviews() {
         useState<"all" | "behavioral" | "technical">("all");
     const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
-    // CRUD state
-    const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [form, setForm] = useState({
-        title: "",
-        description: "",
-        color: "#6c47ff",
-        category: "behavioral" as const,
-    });
-    const [formError, setFormError] = useState("");
     const [showConfirm, setShowConfirm] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-
-    // Creation flow
-    const [creationStep, setCreationStep] = useState<1 | 2>(1);
-    const [pickedType, setPickedType] = useState<"behavioral" | "technical" | null>(
-        null
-    );
-
-    // Technical interview setup wizard
-    const [tStep, setTStep] = useState<0 | 1 | 2 | 3>(0); // 1=stack, 2=screening, 3=level confirm
-    const [tStack, setTStack] = useState<TechStack | null>(null);
-    const [tWantsScreening, setTWantsScreening] = useState<boolean | null>(null);
-    const [seniority, setSeniority] = useState<SeniorityLevel>("Mid-level");
-    const [tBusy, setTBusy] = useState(false);
 
     // Fetch interviews
     const fetchInterviews = async () => {
         setLoading(true);
         setError(null);
         try {
-            // TODO: Update API endpoint
             const res = await fetch("/api/interviews");
             if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
             const data = await res.json();
@@ -122,124 +92,13 @@ export default function DashboardInterviews() {
         if (!exists) setExpandedKey(null);
     }, [filteredInterviews, expandedKey]);
 
-    // Collapse on filter/search changes
-    useEffect(() => {
-        setExpandedKey(null);
-    }, [searchQuery, activeCat]);
-
-    // Helpers
     const toggleExpand = (rowKey: string) => {
         setExpandedKey((prev) => (prev === rowKey ? null : rowKey));
     };
 
-    const resetTechWizard = () => {
-        setTStep(0);
-        setTStack(null);
-        setTWantsScreening(null);
-        setSeniority("Mid-level");
-        setTBusy(false);
-    };
-
-    const resetForm = () => {
-        setForm({
-            title: "",
-            description: "",
-            color: "#6c47ff",
-            category: "behavioral",
-        });
-        setEditingId(null);
-        setFormError("");
-        setCreationStep(1);
-        setPickedType(null);
-        resetTechWizard();
-    };
-
-
-
-    const openModal = (i?: Interview) => {
-        if (i) {
-            setForm({
-                title: i.title,
-                description: i.description,
-                color: i.color,
-                category: i.category,
-            });
-            setEditingId(i.id);
-            setCreationStep(2);
-            setPickedType(i.category);
-        } else {
-            resetForm();
-        }
-        setShowModal(true);
-    };
-
-    // Create/Save (Behavioral or Edit)
-    const saveInterview = async () => {
-        if (pickedType !== "technical" && !form.title.trim()) {
-            setFormError("Interview title is required.");
-            return;
-        }
-
-        const method = editingId ? "PUT" : "POST";
-        const payload = editingId
-            ? { ...form, id: editingId }
-            : { ...form, category: pickedType ?? "behavioral" };
-
-        const res = await fetch("/api/interviews", { // TODO: Update API endpoint
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-            setFormError("Failed to save interview.");
-            return;
-        }
-        setShowModal(false);
-        await fetchInterviews();
-        resetForm();
-    };
-
-    const createOneTechnicalInterview = async (title: string, desc = "") => {
-        const res = await fetch("/api/interviews", { // TODO: Update API endpoint
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                title,
-                description: desc,
-                color: "#0ea5e9", // A different default for technical
-                category: "technical",
-            }),
-        });
-        if (!res.ok) {
-            const txt = await res.text().catch(() => "");
-            throw new Error(txt || "Failed creating technical interview");
-        }
-        return res.json();
-    };
-
-    // Creator for technical interviews from the wizard
-    const createTechnicalInterview = async () => {
-        if (!tStack || tBusy) return;
-        setTBusy(true);
-        try {
-            const suffix = tWantsScreening ? ` • ${seniority}` : "";
-            const title = `${tStack.charAt(0).toUpperCase()}${tStack.slice(1)} Interview${suffix}`;
-
-            await createOneTechnicalInterview(title, "Created via technical interview setup");
-
-            setShowModal(false);
-            await fetchInterviews();
-            resetForm();
-        } catch (e: any) {
-            setFormError(e?.message || "Failed to create interview");
-        } finally {
-            setTBusy(false);
-        }
-    };
-
     const deleteInterview = async () => {
         if (!deletingId) return;
-        await fetch("/api/interviews", { // TODO: Update API endpoint
+        await fetch("/api/interviews", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: deletingId }),
@@ -249,7 +108,6 @@ export default function DashboardInterviews() {
         await fetchInterviews();
     };
 
-    // Animations
     const listContainer = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -266,26 +124,15 @@ export default function DashboardInterviews() {
 
     const hasTechnical = interviews.some((i) => i.category === "technical");
 
-    // Wizard back logic
-    const backFromWizard = () => {
-        if (tStep === 1) {
-            setCreationStep(1);
-            setPickedType(null);
-            resetTechWizard();
-        } else if (tStep === 2) {
-            setTStep(1);
-            setTWantsScreening(null);
-        } else if (tStep === 3) {
-            setTStep(2);
-        }
-    };
-
+    /* =======================================
+     * UI
+     * =======================================
+     */
     return (
         <div className="min-h-screen bg-[#f5f8fe] px-4 py-10 sm:px-6">
             {/* Header */}
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-4">
-
                     <h1 className="text-3xl font-bold tracking-tight">My Interviews</h1>
                     <div className="relative">
                         <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -298,13 +145,14 @@ export default function DashboardInterviews() {
                     </div>
                 </div>
 
+                {/* Create Button */}
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => openModal()}
+                    onClick={() => router.push("/interviews/create")}
                     className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700"
                 >
-                    <Plus className="h-4 w-4" /> New Interview
+                    <Plus className="h-4 w-4" /> Create New Interview
                 </motion.button>
             </div>
 
@@ -360,7 +208,6 @@ export default function DashboardInterviews() {
                 </div>
             ) : filteredInterviews.length === 0 ? (
                 <div className="mx-auto max-w-md rounded-2xl border bg-white p-6 text-center shadow-sm">
-
                     <p className="text-gray-600">No interviews match your search.</p>
                 </div>
             ) : (
@@ -374,7 +221,6 @@ export default function DashboardInterviews() {
                         const rowKey = makeRowKey(i);
                         const isExpanded = expandedKey === rowKey;
 
-                        // Actions available for each interview card
                         const items = [
                             {
                                 href: `/interviews/${i.id}/start`,
@@ -405,9 +251,6 @@ export default function DashboardInterviews() {
                                     onClick={() => toggleExpand(rowKey)}
                                     className="relative group cursor-pointer select-none rounded-[28px] pr-14"
                                     style={{ backgroundColor: i.color }}
-                                    role="button"
-                                    aria-expanded={isExpanded}
-                                    aria-controls={`interview-${rowKey}`}
                                 >
                                     <div
                                         className="pointer-events-none absolute inset-0 rounded-[28px]"
@@ -434,11 +277,10 @@ export default function DashboardInterviews() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    openModal(i);
+                                                    router.push(`/interviews/${i.id}/settings`);
                                                 }}
                                                 className="rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
                                                 title="Edit"
-                                                aria-label={`Edit ${i.title}`}
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </button>
@@ -450,7 +292,6 @@ export default function DashboardInterviews() {
                                                 }}
                                                 className="rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
                                                 title="Delete"
-                                                aria-label={`Delete ${i.title}`}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
@@ -468,20 +309,15 @@ export default function DashboardInterviews() {
                                     </div>
                                 </div>
 
-                                {/* Body */}
+                                {/* Expanded Actions */}
                                 <AnimatePresence initial={false}>
                                     {isExpanded && (
                                         <motion.div
-                                            id={`interview-${rowKey}`}
                                             key="content"
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: "auto", opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
-                                            transition={{
-                                                type: "spring",
-                                                stiffness: 260,
-                                                damping: 24,
-                                            }}
+                                            transition={{ type: "spring", stiffness: 260, damping: 24 }}
                                             className="overflow-hidden"
                                         >
                                             <div className="rounded-b-[28px] border-t border-black/10 bg-white">
@@ -490,14 +326,12 @@ export default function DashboardInterviews() {
                                                         <button
                                                             key={it.label}
                                                             onClick={() => router.push(it.href)}
-                                                            className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2"
+                                                            className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-gray-50"
                                                         >
-                                                            <span className="h-6 w-6 grid place-items-center">
-                                                                {it.icon}
-                                                            </span>
-                                                            <span className="font-medium text-gray-900">
-                                                                {it.label}
-                                                            </span>
+                              <span className="h-6 w-6 grid place-items-center">
+                                {it.icon}
+                              </span>
+                                                            <span className="font-medium text-gray-900">{it.label}</span>
                                                             <ChevronRight className="h-4 w-4 text-gray-400" />
                                                         </button>
                                                     ))}
@@ -511,273 +345,6 @@ export default function DashboardInterviews() {
                     })}
                 </motion.div>
             )}
-
-            {/* Create / Edit Modal */}
-            <AnimatePresence>
-                {showModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-                    >
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 20, opacity: 0 }}
-                            transition={{ type: "spring", stiffness: 240, damping: 22 }}
-                            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
-                        >
-                            <div className="bg-gradient-to-r from-indigo-500 to-blue-500 p-4 text-white">
-                                <div className="flex items-center justify-between">
-                                    {pickedType === "technical" && creationStep === 2 && tStep > 0 ? (
-                                        <button
-                                            onClick={backFromWizard}
-                                            className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-sm hover:bg-white/15"
-                                        >
-                                            <ArrowLeft className="h-4 w-4" />
-                                            Back
-                                        </button>
-                                    ) : (
-                                        <span />
-                                    )}
-                                    <h3 className="text-lg font-semibold">
-                                        {editingId
-                                            ? "Edit Interview"
-                                            : creationStep === 1
-                                                ? "Create an Interview"
-                                                : pickedType === "technical"
-                                                    ? "Technical Interview Setup"
-                                                    : "New Behavioral Interview"}
-                                    </h3>
-                                    <button
-                                        onClick={() => setShowModal(false)}
-                                        className="rounded-full p-1 hover:bg-white/10"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 p-5">
-                                {formError && (
-                                    <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
-                                        {formError}
-                                    </div>
-                                )}
-
-                                {/* STEP 1: Choose type */}
-                                {!editingId && creationStep === 1 && (
-                                    <div className="space-y-3">
-                                        <p className="text-sm font-medium">Choose interview type</p>
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <button
-                                                onClick={() => {
-                                                    setPickedType("behavioral");
-                                                    setForm((f) => ({ ...f, category: "behavioral" }));
-                                                    setCreationStep(2);
-                                                }}
-                                                className="rounded-xl border p-4 text-left hover:bg-gray-50"
-                                            >
-                                                <div className="text-base font-semibold">Behavioral</div>
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    Focus on soft skills, experience, and culture fit.
-                                                </p>
-                                            </button>
-
-                                            <button
-                                                onClick={() => {
-                                                    setPickedType("technical");
-                                                    setForm((f) => ({ ...f, category: "technical" }));
-                                                    setCreationStep(2);
-                                                    setTStep(1); // start wizard
-                                                }}
-                                                className="rounded-xl border p-4 text-left hover:bg-gray-50"
-                                            >
-                                                <div className="text-base font-semibold">Technical</div>
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    Assess problem-solving and coding skills.
-                                                </p>
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* STEP 2-A: Behavioral details */}
-                                {creationStep === 2 && pickedType === "behavioral" && (
-                                    <>
-                                        <div className="text-xs uppercase tracking-wide text-gray-500">
-                                            Type: <span className="font-semibold text-gray-800">Behavioral</span>
-                                        </div>
-
-                                        <input
-                                            value={form.title}
-                                            onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                            placeholder="Role Title (e.g. Product Manager)"
-                                            className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
-                                        />
-
-                                        <textarea
-                                            value={form.description}
-                                            onChange={(e) =>
-                                                setForm({ ...form, description: e.target.value })
-                                            }
-                                            placeholder="Description (optional)"
-                                            rows={4}
-                                            className="w-full rounded-lg border p-3 outline-none focus:ring-2 focus:ring-blue-300"
-                                        />
-
-                                        <div>
-                                            <p className="mb-2 text-sm font-medium">Card Color</p>
-                                            <input
-                                                type="color"
-                                                value={form.color}
-                                                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                                                className="h-10 w-full cursor-pointer rounded border"
-                                            />
-                                        </div>
-
-                                        <div className="flex justify-end gap-2 pt-2">
-                                            <button
-                                                onClick={() => {
-                                                    setShowModal(false);
-                                                    resetForm();
-                                                }}
-                                                className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={saveInterview}
-                                                disabled={!form.title.trim()}
-                                                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-                                            >
-                                                Save
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* STEP 2-B: Technical wizard */}
-                                {creationStep === 2 && pickedType === "technical" && (
-                                    <div className="space-y-4">
-                                        {/* Q1: Tech Stack */}
-                                        {tStep === 1 && (
-                                            <>
-                                                <p className="text-sm font-medium">
-                                                    What is the primary tech stack?
-                                                </p>
-                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                                    {[
-                                                        { key: "javascript", label: "JavaScript" },
-                                                        { key: "python", label: "Python" },
-                                                        { key: "java", label: "Java" },
-                                                    ].map((o) => (
-                                                        <button
-                                                            key={o.key}
-                                                            onClick={() => {
-                                                                setTStack(o.key as TechStack);
-                                                                setTStep(2);
-                                                            }}
-                                                            className="rounded-xl border p-4 text-center hover:bg-gray-50"
-                                                        >
-                                                            <div className="font-semibold">{o.label}</div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Q2: Screening */}
-                                        {tStep === 2 && tStack && (
-                                            <>
-                                                <p className="text-sm font-medium">
-                                                    Include a screening question to set the difficulty level?
-                                                </p>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <button
-                                                        onClick={() => {
-                                                            setTWantsScreening(true);
-                                                            setSeniority("Mid-level"); // Default result
-                                                            setTStep(3);
-                                                        }}
-                                                        disabled={tBusy}
-                                                        className="rounded-xl border p-4 text-left hover:bg-gray-50 disabled:opacity-60"
-                                                    >
-                                                        <div className="text-base font-semibold">Yes</div>
-                                                        <p className="mt-1 text-sm text-gray-600">
-                                                            Helps gauge seniority.
-                                                        </p>
-                                                    </button>
-                                                    <button
-                                                        onClick={async () => {
-                                                            setTWantsScreening(false);
-                                                            await createTechnicalInterview();
-                                                        }}
-                                                        disabled={tBusy}
-                                                        className="rounded-xl border p-4 text-left hover:bg-gray-50 disabled:opacity-60"
-                                                    >
-                                                        <div className="text-base font-semibold">No</div>
-                                                        <p className="mt-1 text-sm text-gray-600">
-                                                            Create standard interview.
-                                                        </p>
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Q3: Level confirm */}
-                                        {tStep === 3 && tWantsScreening && (
-                                            <>
-                                                <p className="text-sm font-medium">
-                                                    Please select the target seniority level.
-                                                </p>
-                                                <div className="grid grid-cols-1 gap-2">
-                                                    {(["Junior", "Mid-level", "Senior"] as SeniorityLevel[]).map(
-                                                        (lv) => (
-                                                            <label
-                                                                key={lv}
-                                                                className={cx(
-                                                                    "flex items-center gap-2 rounded-xl border p-3 cursor-pointer",
-                                                                    seniority === lv && "ring-2 ring-blue-300"
-                                                                )}
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name="level"
-                                                                    checked={seniority === lv}
-                                                                    onChange={() => setSeniority(lv)}
-                                                                />
-                                                                <span>{lv}</span>
-                                                            </label>
-                                                        )
-                                                    )}
-                                                </div>
-
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={backFromWizard}
-                                                        className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
-                                                    >
-                                                        Back
-                                                    </button>
-                                                    <button
-                                                        onClick={createTechnicalInterview}
-                                                        disabled={tBusy}
-                                                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-                                                    >
-                                                        {tBusy ? "Creating…" : "Create Interview"}
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             {/* Delete Confirm */}
             <AnimatePresence>
@@ -823,4 +390,3 @@ export default function DashboardInterviews() {
         </div>
     );
 }
-
